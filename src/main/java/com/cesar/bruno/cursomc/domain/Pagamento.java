@@ -11,7 +11,6 @@ import javax.persistence.MapsId;
 import javax.persistence.OneToOne;
 
 import com.cesar.bruno.cursomc.domain.enums.EstadoPagamento;
-import com.cesar.bruno.cursomc.domain.enums.TipoCliente;
 
 @Entity
 @Inheritance(strategy=InheritanceType.JOINED)
