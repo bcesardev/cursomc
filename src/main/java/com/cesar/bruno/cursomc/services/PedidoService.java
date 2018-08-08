@@ -9,6 +9,7 @@ import com.cesar.bruno.cursomc.domain.ItemPedido;
 import com.cesar.bruno.cursomc.domain.PagamentoComBoleto;
 import com.cesar.bruno.cursomc.domain.Pedido;
 import com.cesar.bruno.cursomc.domain.enums.EstadoPagamento;
+import com.cesar.bruno.cursomc.repositories.ClienteRepository;
 import com.cesar.bruno.cursomc.repositories.ItemPedidoRepository;
 import com.cesar.bruno.cursomc.repositories.PagamentoRepository;
 import com.cesar.bruno.cursomc.repositories.PedidoRepository;
@@ -33,6 +34,12 @@ public class PedidoService {
 	@Autowired
 	private ItemPedidoRepository itemPedidoRepository;
 
+	@Autowired
+	private ClienteRepository clienteRepository;
+	
+	@Autowired
+	private EmailService emailService;
+
 	public Pedido find(Integer id) {
 		Pedido obj = repo.findOne(id);
 		if (obj == null) {
@@ -44,6 +51,7 @@ public class PedidoService {
 	public Pedido insert(Pedido obj) {
 		obj.setId(null);
 		obj.setInstante(new Date());
+		obj.setCliente(clienteRepository.findOne(obj.getCliente().getId()));
 		obj.getPagamento().setEstado(EstadoPagamento.PENDENTE);
 		obj.getPagamento().setPedido(obj);
 		if (obj.getPagamento() instanceof PagamentoComBoleto) {
@@ -54,10 +62,12 @@ public class PedidoService {
 		pagamentoRepository.save(obj.getPagamento());
 		for (ItemPedido ip : obj.getItens()) {
 			ip.setDesconto(0.0);
-			ip.setPreco(produtoRepository.findOne(ip.getProduto().getId()).getPreco());
+			ip.setProduto(produtoRepository.findOne(ip.getProduto().getId()));
+			ip.setPreco(ip.getProduto().getPreco());
 			ip.setPedido(obj);
 		}
 		itemPedidoRepository.save(obj.getItens());
+		emailService.sendOrderConfirmationEmail(obj);
 		return obj;
 	}
 
